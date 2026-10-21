@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Pizza Dough Calculator</title>
+  <meta name="theme-color" content="#c2410c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" href="logo-192.png" />
+  <link rel="apple-touch-icon" href="logo-192.png" />
+
+  <style>
+    :root {
+      --bg: #fbf3e4;
+      --surface: #ffffff;
+      --surface-2: #fff8ec;
+      --ink: #3b2a1e;
+      --ink-soft: #7a6352;
+      --line: #eadcc2;
+      --brand: #c2410c;
+      --brand-2: #ea580c;
+      --brand-ink: #ffffff;
+      --accent: #f4b942;
+      --ok: #2f8f4e;
+      --shadow: 0 10px 30px rgba(120, 60, 15, .12);
+      --hero-1: #c2410c;
+      --hero-2: #e8730f;
+    }
+    :root[data-theme="dark"] {
+      --bg: #1b130d;
+      --surface: #271b13;
+      --surface-2: #31231a;
+      --ink: #f6e9d6;
+      --ink-soft: #b9a28b;
+      --line: #43311f;
+      --brand: #f59e42;
+      --brand-2: #fbbf5a;
+      --brand-ink: #2a1503;
+      --accent: #f4b942;
+      --ok: #5fd188;
+      --shadow: 0 10px 30px rgba(0, 0, 0, .45);
+      --hero-1: #7c2d0a;
+      --hero-2: #b4540f;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Devanagari', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding-bottom: env(safe-area-inset-bottom);
+      transition: background .3s, color .3s;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: url('pizza-bg.jpg') center/cover no-repeat;
+      opacity: .07;
+      filter: sepia(30%);
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .app { max-width: 480px; margin: 0 auto; padding: 0 16px 40px; }
+
+    /* ---------- Hero ---------- */
+    .hero {
+      margin: 0 -16px;
+      padding: calc(env(safe-area-inset-top) + 16px) 20px 76px;
+      background: radial-gradient(120% 140% at 85% 0%, var(--hero-2), var(--hero-1));
+      color: #fff;
+      border-radius: 0 0 32px 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: '🍕';
+      position: absolute; right: -18px; bottom: -34px;
+      font-size: 150px; opacity: .13; transform: rotate(-18deg);
+    }
+    .topbar { display: flex; justify-content: flex-end; gap: 8px; position: relative; z-index: 2; }
+    .chip-btn {
+      width: auto; height: 38px; min-width: 38px; padding: 0 12px;
+      border-radius: 19px; border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.16); color: #fff;
+      font: 600 .85rem inherit; font-family: inherit; cursor: pointer;
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    }
+    .chip-btn:active { transform: scale(.94); }
+    .brand { display: flex; align-items: center; gap: 14px; margin-top: 10px; position: relative; z-index: 2; }
+    .logo {
+      width: 76px; height: 76px; border-radius: 22px; background: #fff;
+      object-fit: cover; box-shadow: 0 6px 18px rgba(0,0,0,.25); flex-shrink: 0;
+    }
+    h1 { font-size: 1.45rem; line-height: 1.15; font-weight: 700; }
+    .tagline { font-size: .82rem; opacity: .9; margin-top: 4px; font-style: italic; }
+
+    /* ---------- Input card ---------- */
+    .input-card {
+      margin-top: -52px;
+      background: var(--surface);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--line);
+      position: relative; z-index: 3;
+    }
+    .input-card label { font-size: .85rem; font-weight: 600; color: var(--ink-soft); display: block; margin-bottom: 10px; }
+    .stepper { display: flex; align-items: center; gap: 10px; }
+    .step-btn {
+      width: 52px; height: 52px; flex-shrink: 0; border-radius: 16px;
+      border: 1px solid var(--line); background: var(--surface-2); color: var(--brand);
+      font-size: 1.6rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: transform .12s, background .2s;
+    }
+    .step-btn:active { transform: scale(.92); background: var(--line); }
+    .amount-wrap { position: relative; flex: 1; }
+    #flour {
+      width: 100%; height: 52px; text-align: center;
+      font: 700 1.6rem 'Poppins', system-ui, sans-serif; color: var(--ink);
+      background: var(--surface-2); border: 2px solid var(--line); border-radius: 16px;
+      padding: 0 40px 0 12px; transition: border-color .2s, box-shadow .2s;
+      -moz-appearance: textfield; appearance: textfield;
+    }
+    #flour::-webkit-outer-spin-button, #flour::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    #flour:focus { outline: none; border-color: var(--brand-2); box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-2) 20%, transparent); }
+    .unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-weight: 600; color: var(--ink-soft); pointer-events: none; }
+
+    .presets { display: flex; gap: 8px; margin-top: 14px; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+    .presets::-webkit-scrollbar { display: none; }
+    .preset {
+      flex: 1 0 auto; width: auto; padding: 9px 14px; border-radius: 999px;
+      border: 1.5px solid var(--line); background: transparent; color: var(--ink);
+      font: 600 .85rem 'Poppins', system-ui, sans-serif; cursor: pointer; white-space: nowrap;
+      transition: all .2s;
+    }
+    .preset.active { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+    .preset:active { transform: scale(.95); }
+
+    /* ---------- Results ---------- */
+    .section-head { display: flex; align-items: center; justify-content: space-between; margin: 26px 4px 12px; }
+    .section-head h2 { font-size: 1.1rem; font-weight: 700; }
+    .progress-label { font-size: .8rem; font-weight: 600; color: var(--ink-soft); }
+    .progress { height: 8px; border-radius: 8px; background: var(--line); overflow: hidden; margin: 0 4px 14px; }
+    .progress > i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--accent), var(--brand-2)); border-radius: 8px; transition: width .35s cubic-bezier(.3,.9,.4,1); }
+    .progress.done > i { background: var(--ok); }
+
+    .list { display: grid; gap: 10px; }
+    .item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 18px; padding: 12px 14px; cursor: pointer;
+      transition: transform .15s, opacity .25s, background .25s, border-color .25s;
+      animation: rise .4s both; user-select: none; -webkit-user-select: none;
+      position: relative;
+    }
+    .item:active { transform: scale(.985); }
+    .icon {
+      width: 46px; height: 46px; border-radius: 14px; background: var(--surface-2);
+      display: grid; place-items: center; font-size: 1.5rem; flex-shrink: 0;
+    }
+    .item .meta { flex: 1; min-width: 0; }
+    .item .name { font-weight: 600; font-size: .98rem; }
+    .item .sub { font-size: .74rem; color: var(--ink-soft); margin-top: 1px; }
+    .item .qty { text-align: right; }
+    .item .qty b { font-size: 1.2rem; font-weight: 700; color: var(--brand); display: block; line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .item .qty small { font-size: .72rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+    .check {
+      width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--line);
+      display: grid; place-items: center; color: transparent; font-size: .85rem; font-weight: 700; flex-shrink: 0;
+      transition: all .2s;
+    }
+    .item.done { opacity: .55; background: var(--surface-2); }
+    .item.done .name { text-decoration: line-through; }
+    .item.done .check { background: var(--ok); border-color: var(--ok); color: #fff; }
+    .item.new::after {
+      content: attr(data-new); position: absolute; top: -8px; left: 60px;
+      background: var(--accent); color: #3b2a1e; font-size: .62rem; font-weight: 700;
+      padding: 2px 8px; border-radius: 999px; letter-spacing: .03em;
+    }
+
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+    .btn {
+      width: 100%; padding: 14px; border-radius: 16px; border: none; cursor: pointer;
+      font: 600 .95rem 'Poppins', system-ui, sans-serif; text-align: center; text-decoration: none;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform .12s;
+    }
+    .btn:active { transform: scale(.96); }
+    .btn.wa { background: #25d366; color: #fff; box-shadow: 0 6px 16px rgba(37,211,102,.28); }
+    .btn.ghost { background: var(--surface); color: var(--ink); border: 1.5px solid var(--line); }
+    .btn.reset { grid-column: 1 / -1; background: transparent; color: var(--ink-soft); padding: 8px; font-weight: 500; font-size: .85rem; }
+
+    .empty { text-align: center; color: var(--ink-soft); padding: 34px 20px; }
+    .empty .big { font-size: 3rem; display: block; margin-bottom: 8px; }
+
+    .footer { text-align: center; font-size: .75rem; color: var(--ink-soft); margin-top: 28px; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 24px);
+      transform: translate(-50%, 30px); opacity: 0;
+      background: var(--ink); color: var(--bg); padding: 11px 20px; border-radius: 999px;
+      font-size: .85rem; font-weight: 600; pointer-events: none; z-index: 20;
+      transition: all .3s;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="hero">
+      <div class="topbar">
+        <button class="chip-btn" id="lang-btn" aria-label="Language">हिन्दी</button>
+        <button class="chip-btn" id="theme-btn" aria-label="Theme">🌙</button>
+      </div>
+      <div class="brand">
+        <img src="logo-192.png" alt="Chef Gurvinder" class="logo" />
+        <div>
+          <h1 id="app-title">Pizza Dough Calculator</h1>
+          <p class="tagline" id="app-tagline">Crafted with precision, baked with love.</p>
+        </div>
+      </div>
+    </header>
+
+    <section class="input-card">
+      <label for="flour" id="flour-label">'00' Flour</label>
+      <div class="stepper">
+        <button class="step-btn" id="minus" aria-label="Decrease">−</button>
+        <div class="amount-wrap">
+          <input type="number" id="flour" inputmode="decimal" placeholder="1000" min="1" />
+          <span class="unit">g</span>
+        </div>
+        <button class="step-btn" id="plus" aria-label="Increase">+</button>
+      </div>
+      <div class="presets" id="presets"></div>
+    </section>
+
+    <div id="results"></div>
+
+    <p class="footer" id="footer">Chef Gurvinder · Passion, Experience &amp; Artistry</p>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    /* Ratios are per 1 g of flour (e.g. Bread Improver: 10 g per 1 kg = 0.01) */
+    const INGREDIENTS = [
+      { key: 'Water',         ratio: 0.40,  icon: '💧' },
+      { key: 'Milk',          ratio: 0.40,  icon: '🥛' },
+      { key: 'Salt',          ratio: 0.02,  icon: '🧂' },
+      { key: 'Sugar',         ratio: 0.025, icon: '🍬' },
+      { key: 'Yeast',         ratio: 0.02,  icon: '🫧' },
+      { key: 'BreadImprover', ratio: 0.01,  icon: '✨', isNew: true },
+      { key: 'Gluten',        ratio: 0.086, icon: '🌾', isNew: true },
+      { key: 'Oil',           ratio: 0.06,  icon: '🫒' },
+      { key: 'BakingSoda',    ratio: 0.01,  icon: '🧪' },
+      { key: 'Semolina',      ratio: 0.06,  icon: '🟡' },
+      { key: 'AfterDoughOil', ratio: 0.01,  icon: '🫗' }
+    ];
+    const PRESETS = [500, 1000, 2000, 3000, 5000, 10000];
+
+    const LANG = {
+      en: {
+        title: 'Pizza Dough Calculator',
+        tagline: 'Crafted with precision, baked with love.',
+        flourLabel: "'00' Flour",
+        resultsTitle: 'Your Recipe',
+        perKg: 'per kg of flour',
+        ofFlour: 'of flour',
+        newTag: 'NEW',
+        ready: 'ready',
+        allDone: 'All measured — happy baking! 🍕',
+        whatsapp: 'WhatsApp',
+        copy: 'Copy',
+        copied: 'Recipe copied!',
+        reset: 'Clear ticks',
+        emptyTitle: 'Enter your flour weight',
+        emptyText: 'Type an amount or tap a quick pick to see the full recipe.',
+        shareTitle: "*Pizza Dough Recipe* (Chef Gurvinder)\nFor *[FLOUR]* '00' Flour:\n\n",
+        footer: 'Chef Gurvinder · Passion, Experience & Artistry',
+        langBtn: 'हिन्दी',
+        ing: { Water:'Water', Milk:'Milk', Salt:'Salt', Sugar:'Sugar', Yeast:'Yeast', BreadImprover:'Bread Improver', Gluten:'Gluten', Oil:'Oil', BakingSoda:'Baking Soda', Semolina:'Semolina', AfterDoughOil:'After Dough Oil' }
+      },
+      hi: {
+        title: 'पिज़्ज़ा आटा कैलकुलेटर',
+        tagline: 'परिशुद्धता से तैयार, प्यार से बेक किया गया।',
+        flourLabel: "'00' आटा",
+        resultsTitle: 'आपकी रेसिपी',
+        perKg: 'प्रति किलो आटा',
+        ofFlour: 'आटे के लिए',
+        newTag: 'नया',
+        ready: 'तैयार',
+        allDone: 'सब तौल लिया — बेकिंग मुबारक! 🍕',
+        whatsapp: 'व्हाट्सएप',
+        copy: 'कॉपी',
+        copied: 'रेसिपी कॉपी हो गई!',
+        reset: 'टिक हटाएँ',
+        emptyTitle: 'आटे की मात्रा दर्ज करें',
+        emptyText: 'मात्रा लिखें या जल्दी चुनें, पूरी रेसिपी दिख जाएगी।',
+        shareTitle: "*पिज़्ज़ा आटा रेसिपी* (शेफ गुरविंदर)\n*[FLOUR]* '00' आटे के लिए:\n\n",
+        footer: 'शेफ गुरविंदर · जुनून, अनुभव और कला',
+        langBtn: 'English',
+        ing: { Water:'पानी', Milk:'दूध', Salt:'नमक', Sugar:'चीनी', Yeast:'यीस्ट/खमीर', BreadImprover:'ब्रेड इम्प्रूवर', Gluten:'ग्लूटेन', Oil:'तेल', BakingSoda:'बेकिंग सोडा', Semolina:'सूजी', AfterDoughOil:'आटा गूंधने के बाद का तेल' }
+      }
+    };
+
+    const $ = id => document.getElementById(id);
+    const store = {
+      get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+      set(k, v) { try { localStorage.setItem(k, v); } catch {} }
+    };
+
+    let lang = store.get('pizzaDoughLang', 'en');
+    if (!LANG[lang]) lang = 'en';
+    let ticked = new Set();
+
+    const num = (n, max = 2) => parseFloat(n.toFixed(max)).toString();
+    function fmtMain(g) { return g >= 1000 ? num(g / 1000, 3) + ' kg' : num(g) + ' g'; }
+    function fmtAlt(g) { return g >= 1000 ? num(g) + ' g' : ''; }
+    const flourValue = () => { const v = parseFloat($('flour').value); return v > 0 && isFinite(v) ? v : 0; };
+
+    function renderPresets() {
+      const f = flourValue();
+      $('presets').innerHTML = PRESETS.map(p =>
+        `<button class="preset ${f === p ? 'active' : ''}" data-v="${p}">${p >= 1000 ? p / 1000 + ' kg' : p + ' g'}</button>`).join('');
+    }
+
+    function render() {
+      const t = LANG[lang], flour = flourValue();
+      renderPresets();
+      if (!flour) {
+        $('results').innerHTML = `<div class="empty"><span class="big">🍕</span><b>${t.emptyTitle}</b><p style="margin-top:6px;font-size:.88rem">${t.emptyText}</p></div>`;
+        return;
+      }
+      const items = INGREDIENTS.map((ing, i) => {
+        const g = flour * ing.ratio;
+        return `<div class="item ${ing.isNew ? 'new' : ''} ${ticked.has(ing.key) ? 'done' : ''}" data-key="${ing.key}" ${ing.isNew ? `data-new="${t.newTag}"` : ''} style="animation-delay:${i * 40}ms">
+          <div class="icon">${ing.icon}</div>
+          <div class="meta"><div class="name">${t.ing[ing.key]}</div><div class="sub">${num(ing.ratio * 1000, 1)} g ${t.perKg}</div></div>
+          <div class="qty"><b>${fmtMain(g)}</b><small>${fmtAlt(g)}</small></div>
+          <div class="check">✓</div>
+        </div>`;
+      }).join('');
+      const done = ticked.size, total = INGREDIENTS.length;
+      $('results').innerHTML = `
+        <div class="section-head"><h2>${t.resultsTitle} · ${fmtMain(flour)} ${t.ofFlour}</h2><span class="progress-label" id="plabel"></span></div>
+        <div class="progress" id="pbar"><i></i></div>
+        <div class="list">${items}</div>
+        <div class="actions">
+          <a class="btn wa" id="wa" target="_blank" rel="noopener">💬 ${t.whatsapp}</a>
+          <button class="btn ghost" id="copy">📋 ${t.copy}</button>
+          <button class="btn reset" id="reset">${t.reset}</button>
+        </div>`;
+      updateProgress();
+      $('wa').href = 'https://wa.me/?text=' + encodeURIComponent(recipeText());
+    }
+
+    function updateProgress() {
+      const bar = $('pbar'); if (!bar) return;
+      const done = ticked.size, total = INGREDIENTS.length;
+      bar.firstElementChild.style.width = (done / total * 100) + '%';
+      bar.classList.toggle('done', done === total);
+      $('plabel').textContent = done === total ? '✓ ' + LANG[lang].ready : `${done}/${total}`;
+    }
+
+    function recipeText() {
+      const t = LANG[lang], flour = flourValue();
+      let m = t.shareTitle.replace('[FLOUR]', fmtMain(flour));
+      INGREDIENTS.forEach(ing => { m += `• ${t.ing[ing.key]}: ${fmtMain(flour * ing.ratio)}\n`; });
+      return m;
+    }
+
+    function toast(msg) {
+      const el = $('toast'); el.textContent = msg; el.classList.add('show');
+      clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    function applyLang() {
+      const t = LANG[lang];
+      document.documentElement.lang = lang;
+      $('app-title').textContent = t.title;
+      $('app-tagline').textContent = t.tagline;
+      $('flour-label').textContent = t.flourLabel;
+      $('footer').textContent = t.footer;
+      $('lang-btn').textContent = t.langBtn;
+      render();
+    }
+
+    function setFlour(v) {
+      v = Math.max(0, v);
+      $('flour').value = v || '';
+      store.set('pizzaDoughFlour', v || '');
+      ticked.clear();
+      render();
+    }
+
+    /* ---------- Events ---------- */
+    $('flour').addEventListener('input', () => { store.set('pizzaDoughFlour', $('flour').value); ticked.clear(); render(); });
+    const stepSize = f => f >= 5000 ? 500 : 100;
+    $('plus').onclick = () => { const f = flourValue(); setFlour(f + stepSize(f)); };
+    $('minus').onclick = () => { const f = flourValue(); setFlour(Math.max(0, f - stepSize(f - 1))); };
+    $('presets').addEventListener('click', e => { const b = e.target.closest('.preset'); if (b) setFlour(+b.dataset.v); });
+
+    $('results').addEventListener('click', e => {
+      const item = e.target.closest('.item');
+      if (item) {
+        const k = item.dataset.key;
+        ticked.has(k) ? ticked.delete(k) : ticked.add(k);
+        item.classList.toggle('done');
+        updateProgress();
+        if (navigator.vibrate) navigator.vibrate(10);
+        if (ticked.size === INGREDIENTS.length) toast(LANG[lang].allDone);
+        return;
+      }
+      if (e.target.closest('#copy')) {
+        const done = () => toast(LANG[lang].copied);
+        if (navigator.clipboard) navigator.clipboard.writeText(recipeText()).then(done, done); else done();
+      }
+      if (e.target.closest('#reset')) { ticked.clear(); render(); }
+    });
+
+    $('lang-btn').onclick = () => { lang = lang === 'en' ? 'hi' : 'en'; store.set('pizzaDoughLang', lang); applyLang(); };
+
+    function applyTheme(th) {
+      document.documentElement.dataset.theme = th;
+      $('theme-btn').textContent = th === 'dark' ? '☀️' : '🌙';
+      document.querySelector('meta[name=theme-color]').content = th === 'dark' ? '#7c2d0a' : '#c2410c';
+    }
+    let theme = store.get('pizzaDoughTheme', matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    applyTheme(theme);
+    $('theme-btn').onclick = () => { theme = theme === 'dark' ? 'light' : 'dark'; store.set('pizzaDoughTheme', theme); applyTheme(theme); };
+
+    /* ---------- Init ---------- */
+    const saved = parseFloat(store.get('pizzaDoughFlour', ''));
+    if (saved > 0) $('flour').value = saved;
+    applyLang();
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>
